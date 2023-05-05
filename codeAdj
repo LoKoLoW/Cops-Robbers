@@ -1,0 +1,113 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QTextEdit, QPushButton, QVBoxLayout, QHBoxLayout
+
+# função principal
+
+
+def cops_and_robbers(maze):
+    n = 5  # dimensão
+    adj = [[] for _ in range(n*n)]  # lista de adjacência
+
+# construção da matriz de adjacência
+    for i in range(n):
+        for j in range(n):
+            if maze[i][j] == 1:  # espaço bloq
+                continue
+            u = i*n + j
+            if i < n-1 and maze[i+1][j] == 0:  # espaço abaixo
+                v = (i+1)*n + j
+                adj[u].append(v)
+                adj[v].append(u)
+            if j < n-1 and maze[i][j+1] == 0:  # espaço à direita
+                v = i*n + (j+1)
+                adj[u].append(v)
+                adj[v].append(u)
+
+# busca em profundidade do inicial ao final
+    visited = [False] * (n*n)
+
+    def dfs(u):
+        if u == n*n-1:
+            return True
+        visited[u] = True
+        for v in adj[u]:
+            if not visited[v]:
+                if dfs(v):
+                    return True
+        return False
+
+    return "COPS" if dfs(0) else "ROBBERS"
+
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Cops and Robbers")
+
+# entrada de dados
+        self.t_label = QLabel("Número de casos de teste:")
+        self.t_input = QLineEdit()
+        self.maze_label = QLabel("Matriz 5x5 (0 ou 1):")
+        self.maze_input = QTextEdit()
+
+# botão para executar a função
+        self.execute_button = QPushButton("Executar")
+        self.execute_button.clicked.connect(self.execute)
+
+# campo para exibir o resultado
+        self.result_label = QLabel()
+
+# Layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.t_label)
+        layout.addWidget(self.t_input)
+        layout.addWidget(self.maze_label)
+        layout.addWidget(self.maze_input)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.execute_button)
+
+        layout.addLayout(button_layout)
+
+        layout.addWidget(self.result_label)
+
+        self.setLayout(layout)
+
+    def execute(self):
+        try:
+            t = int(self.t_input.text())
+            maze_list = self.maze_input.toPlainText().strip().split("\n")
+
+            if len(maze_list) != 5*t:
+                raise Exception(
+                    "A matriz deve ter 5 linhas para cada caso de teste.")
+
+            mazes = []
+            for i in range(t):
+                maze = []
+                for j in range(5):
+                    row = list(map(int, maze_list[5*i+j].strip().split()))
+                    if len(row) != 5:
+                        raise Exception(
+                            "Cada linha da matriz deve ter 5 valores.")
+                    maze.append(row)
+                mazes.append(maze)
+
+            results = []
+            for maze in mazes:
+                results.append(cops_and_robbers(maze))
+
+            self.result_label.setText("\n".join(results))
+
+        except Exception as e:
+            self.result_label.setText(str(e))
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    window = MainWindow()
+    window.show()
+
+    sys.exit(app.exec_())
